@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="elevation_1">1dp</dimen>
+    <dimen name="elevation_2">2dp</dimen>
+    <dimen name="elevation_3">3dp</dimen>
+    <dimen name="keyboard_key_corner_radius">10dp</dimen>
+    <dimen name="card_corner_radius">24dp</dimen>
+    <dimen name="padding_min">2dp</dimen>
+    <dimen name="padding_small">4dp</dimen>
+    <dimen name="padding_normal">6dp</dimen>
+    <dimen name="padding_medium">8dp</dimen>
+    <dimen name="padding_large">12dp</dimen>
+    <dimen name="padding_max">16dp</dimen>
+    <dimen name="medium_icon_size">20dp</dimen>
+    <dimen name="large_icon_size">32dp</dimen>
+    <dimen name="notification_button_margin">1dp</dimen>
+    <dimen name="notification_button_inner_padding">8dp</dimen>
+    <dimen name="notification_button_height">48dp</dimen>
+</resources>

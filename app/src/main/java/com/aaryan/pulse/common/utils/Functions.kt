@@ -1,0 +1,94 @@
+package com.aaryan.pulse.common.utils
+
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.KeyboardLanguage
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.AdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.BGAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.BRAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.CSAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.DEAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.ESAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.ElAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.FRAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.HEAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.PLAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.PTAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.RUAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.TRAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.UKAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.advancedKeyboard.USAdvancedKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.BGVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.BRVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.CSVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.DEVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.ESVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.ElVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.FRVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.HEVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.PLVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.PTVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.RUVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.TRVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.UKVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.USVirtualKeyboardLayout
+import com.aaryan.pulse.domain.entity.remoteInput.keyboard.virtualKeyboard.VirtualKeyboardLayout
+import org.koin.mp.KoinPlatform.getKoin
+
+fun isDynamicColorsAvailable(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+fun checkBluetoothConnectPermission(context: Context): Boolean = when {
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+    else -> ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED
+}
+
+fun checkBluetoothScanPermission(context: Context): Boolean = when {
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+    else -> ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADMIN) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+}
+
+fun getKeyboardLayout(language: KeyboardLanguage): VirtualKeyboardLayout {
+    return when(language) {
+        KeyboardLanguage.ENGLISH_US -> getKoin().get<USVirtualKeyboardLayout>()
+        KeyboardLanguage.ENGLISH_UK -> getKoin().get<UKVirtualKeyboardLayout>()
+        KeyboardLanguage.SPANISH -> getKoin().get<ESVirtualKeyboardLayout>()
+        KeyboardLanguage.FRENCH -> getKoin().get<FRVirtualKeyboardLayout>()
+        KeyboardLanguage.GERMAN -> getKoin().get<DEVirtualKeyboardLayout>()
+        KeyboardLanguage.RUSSIAN -> getKoin().get<RUVirtualKeyboardLayout>()
+        KeyboardLanguage.CZECH -> getKoin().get<CSVirtualKeyboardLayout>()
+        KeyboardLanguage.POLISH -> getKoin().get<PLVirtualKeyboardLayout>()
+        KeyboardLanguage.PORTUGUESE -> getKoin().get<PTVirtualKeyboardLayout>()
+        KeyboardLanguage.BRAZILIAN -> getKoin().get<BRVirtualKeyboardLayout>()
+        KeyboardLanguage.GREEK -> getKoin().get<ElVirtualKeyboardLayout>()
+        KeyboardLanguage.TURKISH -> getKoin().get<TRVirtualKeyboardLayout>()
+        KeyboardLanguage.HEBREW -> getKoin().get<HEVirtualKeyboardLayout>()
+        KeyboardLanguage.BULGARIAN -> getKoin().get<BGVirtualKeyboardLayout>()
+    }
+}
+
+fun getAdvancedKeyboardLayout(language: KeyboardLanguage): AdvancedKeyboardLayout {
+    return when(language) {
+        KeyboardLanguage.ENGLISH_US -> getKoin().get<USAdvancedKeyboardLayout>()
+        KeyboardLanguage.ENGLISH_UK -> getKoin().get<UKAdvancedKeyboardLayout>()
+        KeyboardLanguage.SPANISH -> getKoin().get<ESAdvancedKeyboardLayout>()
+        KeyboardLanguage.FRENCH -> getKoin().get<FRAdvancedKeyboardLayout>()
+        KeyboardLanguage.GERMAN -> getKoin().get<DEAdvancedKeyboardLayout>()
+        KeyboardLanguage.RUSSIAN -> getKoin().get<RUAdvancedKeyboardLayout>()
+        KeyboardLanguage.CZECH -> getKoin().get<CSAdvancedKeyboardLayout>()
+        KeyboardLanguage.POLISH -> getKoin().get<PLAdvancedKeyboardLayout>()
+        KeyboardLanguage.PORTUGUESE -> getKoin().get<PTAdvancedKeyboardLayout>()
+        KeyboardLanguage.BRAZILIAN -> getKoin().get<BRAdvancedKeyboardLayout>()
+        KeyboardLanguage.GREEK -> getKoin().get<ElAdvancedKeyboardLayout>()
+        KeyboardLanguage.TURKISH -> getKoin().get<TRAdvancedKeyboardLayout>()
+        KeyboardLanguage.HEBREW -> getKoin().get<HEAdvancedKeyboardLayout>()
+        KeyboardLanguage.BULGARIAN -> getKoin().get<BGAdvancedKeyboardLayout>()
+    }
+}
+
+fun isMacAddress(macAddress: String): Boolean {
+    val regex = "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$".toRegex()
+    return macAddress.matches(regex)
+}

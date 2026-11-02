@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="288dp"
+            android:height="288dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group
+                android:name="mark"
+                android:pivotX="54"
+                android:pivotY="54">
+                <path
+                    android:name="ring"
+                    android:pathData="M54,44 A10,10 0 1,1 53.99,44 Z"
+                    android:strokeColor="#8FB0FF"
+                    android:strokeWidth="2.5"
+                    android:fillColor="#00000000" />
+                <path
+                    android:name="dot"
+                    android:pathData="M54,50.5 A3.5,3.5 0 1,1 53.99,50.5 Z"
+                    android:fillColor="#FFFFFF" />
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="mark">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:duration="500"
+                    android:valueFrom="0.6"
+                    android:valueTo="1"
+                    android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:duration="500"
+                    android:valueFrom="0.6"
+                    android:valueTo="1"
+                    android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>
