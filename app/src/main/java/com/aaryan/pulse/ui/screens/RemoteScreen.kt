@@ -143,25 +143,10 @@ fun RemoteScreen(
         },
         remoteLayout = {
             if(useMinimalistRemote) {
-                var showTVChannelButtons: Boolean by remember { mutableStateOf(false) }
-
                 MinimalistRemoteView(
                     sendRemoteKeyReport = sendRemoteKeyReport,
-                    showTVChannelButtons = {
-                        showTVChannelButtons = !showTVChannelButtons
-                    },
                     modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_normal))
                 )
-
-                if(showTVChannelButtons) {
-                    TVChannelDialog(
-                        sendRemoteKeyReport = sendRemoteKeyReport,
-                        sendNumberKeyReport = sendKeyboardKeyReport,
-                        onDismissRequest = {
-                            showTVChannelButtons = false
-                        }
-                    )
-                }
             } else {
                 RemoteView(
                     sendRemoteKeyReport = sendRemoteKeyReport,
