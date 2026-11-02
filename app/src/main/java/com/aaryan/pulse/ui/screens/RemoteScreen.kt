@@ -16,11 +16,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -29,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +50,7 @@ import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aaryan.pulse.R
 import com.aaryan.pulse.common.utils.MOUSE_SPEED_DEFAULT_VALUE
+import com.aaryan.pulse.data.tv.TvAppLauncher
 import com.aaryan.pulse.common.utils.REMOTE_INPUT_NONE
 import com.aaryan.pulse.common.utils.getKeyboardLayout
 import com.aaryan.pulse.domain.entity.DeviceHidConnectionState
@@ -97,6 +111,7 @@ fun RemoteScreen(
     var showKeyboard: Boolean by remember { mutableStateOf(false) }
 
     var showHelpBottomSheet: Boolean by remember { mutableStateOf(false) }
+    var showTvAppsDialog: Boolean by rememberSaveable { mutableStateOf(false) }
 
     val useMinimalistRemote: Boolean by settingsViewModel.useMinimalistRemote
         .collectAsStateWithLifecycle(initialValue = false)
@@ -138,7 +153,8 @@ fun RemoteScreen(
                 showHelpBottomSheet = showHelpBottomSheet,
                 onShowHelpBottomSheetChanged = { showHelpBottomSheet = it },
                 sendRemoteKeyReport = sendRemoteKeyReport,
-                showBrightnessButtons = !useMinimalistRemote
+                showBrightnessButtons = !useMinimalistRemote,
+                openTvApps = { showTvAppsDialog = true }
             )
         },
         remoteLayout = {
@@ -175,6 +191,10 @@ fun RemoteScreen(
         },
         modifier = modifier
     )
+
+    if (showTvAppsDialog) {
+        TvAppShortcutsDialog(onDismiss = { showTvAppsDialog = false })
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -415,7 +435,8 @@ private fun TopBarActions(
     showHelpBottomSheet: Boolean,
     onShowHelpBottomSheetChanged: (Boolean) -> Unit,
     sendRemoteKeyReport: (ByteArray) -> Unit,
-    showBrightnessButtons: Boolean
+    showBrightnessButtons: Boolean,
+    openTvApps: () -> Unit
 ) {
 
     FadeAnimatedContent(targetState = navigationToggle) {
@@ -443,6 +464,10 @@ private fun TopBarActions(
             onShowKeyboardChanged(!showKeyboard)
         }
     )
+
+    IconButton(onClick = openTvApps) {
+        Icon(imageVector = Icons.Default.Tv, contentDescription = "TV app shortcuts")
+    }
 
     MoreOverflowMenu { closeDropdownMenu: () -> Unit ->
         if(showBrightnessButtons) {
@@ -487,4 +512,72 @@ private fun TopBarActions(
             }
         )
     }
+}
+
+@Composable
+private fun TvAppShortcutsDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var platform by remember { mutableStateOf(TvAppLauncher.savedPlatform(context)) }
+    var address by remember { mutableStateOf(TvAppLauncher.savedAddress(context)) }
+    var status by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!loading) onDismiss() },
+        title = { Text("TV app shortcuts") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Choose your TV platform. Your phone and TV must be on the same Wi-Fi network.")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = platform == TvAppLauncher.Platform.GOOGLE_TV, onClick = { platform = TvAppLauncher.Platform.GOOGLE_TV })
+                    Text("Google TV / Android TV")
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = platform == TvAppLauncher.Platform.LG_WEBOS, onClick = { platform = TvAppLauncher.Platform.LG_WEBOS })
+                    Text("LG webOS")
+                }
+                OutlinedTextField(
+                    value = address,
+                    onValueChange = { address = it },
+                    label = { Text("TV IP address") },
+                    placeholder = { Text("192.168.1.100") },
+                    singleLine = true
+                )
+                Text(
+                    if (platform == TvAppLauncher.Platform.LG_WEBOS)
+                        "First launch: accept the connection prompt on your LG TV. Pulse saves its pairing key on this phone."
+                    else
+                        "Uses the TV's DIAL app-launch service. Only apps exposed by your TV's DIAL service can launch."
+                )
+                if (loading) CircularProgressIndicator()
+                if (status.isNotBlank()) Text(status)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    TvAppLauncher.App.values().forEach { app ->
+                        Button(
+                            onClick = {
+                                TvAppLauncher.saveTarget(context, platform, address)
+                                loading = true
+                                status = "Connecting…"
+                                scope.launch {
+                                    status = runCatching { TvAppLauncher.launch(context, platform, address, app) }
+                                        .getOrElse { it.message ?: "Could not connect to the TV." }
+                                    loading = false
+                                }
+                            },
+                            enabled = !loading && address.isNotBlank(),
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text(app.label) }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                TvAppLauncher.saveTarget(context, platform, address)
+                onDismiss()
+            }) { Text("Save & close") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !loading) { Text("Close") } }
+    )
 }
