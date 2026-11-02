@@ -13,7 +13,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
 import com.aaryan.pulse.R
 import com.aaryan.pulse.ui.views.remote.buttonsLayouts.BackButton
-import com.aaryan.pulse.ui.views.remote.buttonsLayouts.BrightnessVerticalButtons
 import com.aaryan.pulse.ui.views.remote.buttonsLayouts.ClosedCaptionsButton
 import com.aaryan.pulse.ui.views.remote.buttonsLayouts.HomeButton
 import com.aaryan.pulse.ui.views.remote.buttonsLayouts.MenuButton
@@ -253,13 +252,6 @@ fun MinimalistRemoteView(
                 VolumeMuteButton(
                     sendReport = sendRemoteKeyReport,
                     modifier = Modifier.weight(1f).padding(padding),
-                    shape = shape
-                )
-            }
-            Column(modifier = Modifier.weight(1f).padding(padding)) {
-                BrightnessVerticalButtons(
-                    sendReport = sendRemoteKeyReport,
-                    modifier = Modifier.align(Alignment.End),
                     shape = shape
                 )
             }

@@ -7,6 +7,8 @@ import android.bluetooth.BluetoothHidDeviceAppSdpSettings
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothProfile.ServiceListener
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import androidx.annotation.RequiresPermission
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
@@ -35,6 +37,8 @@ class BluetoothHidProfile(
 
     companion object {
         private const val DATA_STORE_AUTO_CONNECT_DEVICE_ADDRESS_KEY = "auto_connect_device_address_key"
+        private const val MAX_AUTO_RECONNECT_ATTEMPTS = 3
+        private const val AUTO_RECONNECT_DELAY_MS = 2_000L
     }
 
     private var bluetoothHidDevice: BluetoothHidDevice? = null
@@ -53,6 +57,9 @@ class BluetoothHidProfile(
     }
 
     fun stopBluetoothHidProfile() {
+        userRequestedDisconnect = true
+        wasConnected = false
+        reconnectHandler.removeCallbacks(reconnectRunnable)
         bluetoothHidDevice?.let { hidDevice ->
             if (checkBluetoothConnectPermission(context)) {
                 disconnectDevice(hidDevice)
@@ -101,12 +108,55 @@ class BluetoothHidProfile(
             if (checkBluetoothConnectPermission(context)) {
                 _deviceHidConnectionState.value = DeviceHidConnectionState(state, device?.name ?: "")
             }
+            when (state) {
+                BluetoothProfile.STATE_CONNECTED -> {
+                    wasConnected = true
+                    userRequestedDisconnect = false
+                    reconnectAttempts = 0
+                    reconnectHandler.removeCallbacks(reconnectRunnable)
+                    device?.address?.let { connectedDeviceAddress = it }
+                }
+                BluetoothProfile.STATE_DISCONNECTED -> {
+                    val targetAddress = autoConnectDeviceAddress
+                    val disconnectedAddress = device?.address ?: connectedDeviceAddress
+                    if ((wasConnected || reconnectAttempts > 0) && !userRequestedDisconnect &&
+                        !targetAddress.isNullOrBlank() &&
+                        disconnectedAddress.equals(targetAddress, ignoreCase = true)
+                    ) {
+                        wasConnected = false
+                        reconnectHandler.removeCallbacks(reconnectRunnable)
+                        reconnectHandler.postDelayed(reconnectRunnable, AUTO_RECONNECT_DELAY_MS)
+                    }
+                }
+            }
         }
     }
 
     // ---- Device Connection ----
 
     private var bluetoothDevice: BluetoothDevice? = null
+    private var connectedDeviceAddress: String? = null
+    private var wasConnected = false
+    private var userRequestedDisconnect = false
+    private var reconnectAttempts = 0
+    private val reconnectHandler = Handler(Looper.getMainLooper())
+    private val reconnectRunnable = object : Runnable {
+        override fun run() {
+            val address = autoConnectDeviceAddress
+            val hidDevice = bluetoothHidDevice
+            if (address.isBlank() || hidDevice == null ||
+                !_isBluetoothHidProfileRegistered.value || userRequestedDisconnect ||
+                !checkBluetoothConnectPermission(context)
+            ) return
+
+            if (reconnectAttempts >= MAX_AUTO_RECONNECT_ATTEMPTS) return
+            reconnectAttempts++
+            val accepted = connectDevice(hidDevice, address)
+            if (!accepted && reconnectAttempts < MAX_AUTO_RECONNECT_ATTEMPTS) {
+                reconnectHandler.postDelayed(this, AUTO_RECONNECT_DELAY_MS)
+            }
+        }
+    }
 
     fun getBluetoothDeviceName(): String? {
         return if (checkBluetoothConnectPermission(context)) {
@@ -115,6 +165,9 @@ class BluetoothHidProfile(
     }
 
     fun connectDevice(deviceAddress: String): Boolean {
+        userRequestedDisconnect = false
+        reconnectAttempts = 0
+        reconnectHandler.removeCallbacks(reconnectRunnable)
         if (checkBluetoothConnectPermission(context)) {
             bluetoothHidDevice?.let {
                 return connectDevice(it, deviceAddress)
@@ -124,6 +177,10 @@ class BluetoothHidProfile(
     }
 
     fun disconnectDevice(): Boolean {
+        userRequestedDisconnect = true
+        wasConnected = false
+        reconnectAttempts = 0
+        reconnectHandler.removeCallbacks(reconnectRunnable)
         if (checkBluetoothConnectPermission(context)) {
             bluetoothHidDevice?.let {
                 return disconnectDevice(it)
@@ -136,6 +193,7 @@ class BluetoothHidProfile(
     private fun connectDevice(hidDevice: BluetoothHidDevice, deviceAddress: String): Boolean {
         var isConnected = false
         bluetoothDevice = adapter?.getRemoteDevice(deviceAddress.uppercase(Locale.getDefault()))
+        connectedDeviceAddress = deviceAddress
         bluetoothDevice?.let {
             isConnected = hidDevice.connect(it)
         }
@@ -154,6 +212,7 @@ class BluetoothHidProfile(
             isDisconnected = hidDevice.disconnect(it)
         }
         bluetoothDevice = null
+        connectedDeviceAddress = null
         return isDisconnected
     }
 
